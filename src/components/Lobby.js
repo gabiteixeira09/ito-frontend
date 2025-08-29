@@ -1,16 +1,26 @@
 import React, { useState } from "react";
 import socket from "../socket";
-import { Container, Paper, Typography, TextField, Button } from "@mui/material";
+import {
+  Container,
+  Paper,
+  Typography,
+  TextField,
+  Button,
+  Alert,
+} from "@mui/material";
 
 function Lobby({ setRoom }) {
   const [name, setName] = useState("");
   const [roomCode, setRoomCode] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleCreate = () => {
     if (!name.trim()) {
-      alert("Digite seu nome!");
+      setErrorMessage("Digite seu nome para criar a sala!");
       return;
     }
+    setErrorMessage("");
+
     socket.emit("createRoom", { playerName: name.toUpperCase() }, (code) => {
       setRoom({ code, name: name.toUpperCase(), isHost: true });
     });
@@ -18,16 +28,30 @@ function Lobby({ setRoom }) {
 
   const handleJoin = () => {
     if (!name.trim() || !roomCode.trim()) {
-      alert("Digite nome e código!");
+      setErrorMessage("Digite seu nome e o código da sala!");
       return;
     }
-    socket.emit("joinRoom", { roomCode, playerName: name.toUpperCase() }, (ok) => {
-      if (ok) {
-        setRoom({ code: roomCode, name: name.toUpperCase(), isHost: false });
-      } else {
-        alert("Sala não encontrada!");
+    setErrorMessage("");
+
+    socket.emit(
+      "joinRoom",
+      { roomCode, playerName: name.toUpperCase() },
+      (status) => {
+        if (status === "ok") {
+          setRoom({
+            code: roomCode,
+            name: name.toUpperCase(),
+            isHost: false,
+          });
+        } else if (status === "notFound") {
+          setErrorMessage("Sala não encontrada.");
+        } else if (status === "alreadyStarted") {
+          setErrorMessage(
+            "A partida já foi iniciada, não é possível entrar agora."
+          );
+        }
       }
-    });
+    );
   };
 
   return (
@@ -38,7 +62,7 @@ function Lobby({ setRoom }) {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        backgroundColor: "#2c3e47", // fundo cinza escuro
+        backgroundColor: "#2c3e47",
       }}
     >
       <Paper
@@ -58,13 +82,19 @@ function Lobby({ setRoom }) {
           Bem-vindo ao ITO 🎴
         </Typography>
 
+        {errorMessage && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {errorMessage}
+          </Alert>
+        )}
+
         <TextField
           label="Seu nome"
           variant="outlined"
           fullWidth
           value={name}
           onChange={(e) => setName(e.target.value.toUpperCase())}
-          sx={{ marginBottom: "1.5rem" }}
+          sx={{ mb: 2 }}
         />
 
         <Button
@@ -74,7 +104,7 @@ function Lobby({ setRoom }) {
             backgroundColor: "#f97316",
             "&:hover": { backgroundColor: "#ea580c" },
             borderRadius: "12px",
-            marginBottom: "2rem",
+            mb: 3,
           }}
           onClick={handleCreate}
         >
@@ -87,7 +117,7 @@ function Lobby({ setRoom }) {
           fullWidth
           value={roomCode}
           onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-          sx={{ marginBottom: "1.5rem" }}
+          sx={{ mb: 2 }}
         />
 
         <Button

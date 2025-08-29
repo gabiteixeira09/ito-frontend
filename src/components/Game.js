@@ -16,11 +16,19 @@ function Game({ room }) {
   const [messages, setMessages] = useState([]);
   const [myCard, setMyCard] = useState(null);
   const [theme, setTheme] = useState(null);
-  const [roundStarted, setRoundStarted] = useState(false);
+  const [gameStarted, setGameStarted] = useState(false);
   const [clueSent, setClueSent] = useState(false);
+
+  // estados para tema livre
+  const [showCustomTheme, setShowCustomTheme] = useState(false);
+  const [customTitle, setCustomTitle] = useState("");
+  const [customLow, setCustomLow] = useState("");
+  const [customHigh, setCustomHigh] = useState("");
 
   useEffect(() => {
     socket.on("updateRoom", (roomData) => setPlayers(roomData.players));
+
+    socket.on("gameStarted", () => setGameStarted(true));
 
     socket.on("newClue", (data) => {
       setMessages((prev) => [
@@ -31,7 +39,6 @@ function Game({ room }) {
 
     socket.on("yourCard", (card) => {
       setMyCard(card);
-      setRoundStarted(true);
       setClueSent(false);
     });
 
@@ -42,6 +49,7 @@ function Game({ room }) {
 
     return () => {
       socket.off("updateRoom");
+      socket.off("gameStarted");
       socket.off("newClue");
       socket.off("yourCard");
       socket.off("newTheme");
@@ -55,10 +63,12 @@ function Game({ room }) {
     setClueSent(true);
   };
 
+  const startGame = () => {
+    socket.emit("startGame", room.code);
+  };
+
   const startRound = () => {
     socket.emit("startRound", room.code);
-    setRoundStarted(true);
-    setClueSent(false);
     setMessages([]);
   };
 
@@ -98,8 +108,8 @@ function Game({ room }) {
         </ul>
       </Paper>
 
-      {/* Botão iniciar rodada */}
-      {room.isHost && !roundStarted && (
+      {/* Antes de iniciar a partida */}
+      {room.isHost && !gameStarted && (
         <Button
           fullWidth
           variant="contained"
@@ -110,13 +120,99 @@ function Game({ room }) {
             backgroundColor: "#f97316",
             "&:hover": { backgroundColor: "#ea580c" },
           }}
-          onClick={startRound}
+          onClick={startGame}
         >
-          Iniciar Rodada
+          Iniciar Partida
         </Button>
       )}
 
-      {/* Tema sorteado */}
+      {/* Escolha de tema (apenas host, depois que partida começou, mas antes do tema ser definido) */}
+      {room.isHost && gameStarted && !theme && (
+        <Paper
+          elevation={3}
+          sx={{ width: "100%", p: 2, mb: 3, borderRadius: "12px" }}
+        >
+          <Typography variant="h6" gutterBottom>
+            Escolher Tema
+          </Typography>
+
+          <Button
+            fullWidth
+            variant="contained"
+            sx={{
+              mb: 2,
+              backgroundColor: "#f97316",
+              "&:hover": { backgroundColor: "#ea580c" },
+            }}
+            onClick={startRound}
+          >
+            Sortear Tema
+          </Button>
+
+          <Button
+            fullWidth
+            variant="outlined"
+            sx={{ borderColor: "#f97316", color: "#f97316" }}
+            onClick={() => setShowCustomTheme(true)}
+          >
+            Tema Livre
+          </Button>
+        </Paper>
+      )}
+
+      {/* Formulário de tema livre */}
+      {room.isHost && showCustomTheme && !theme && (
+        <Paper
+          elevation={3}
+          sx={{ width: "100%", p: 2, mb: 3, borderRadius: "12px" }}
+        >
+          <TextField
+            label="Título do Tema"
+            variant="outlined"
+            fullWidth
+            value={customTitle}
+            onChange={(e) => setCustomTitle(e.target.value)}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            label="Valor 1"
+            variant="outlined"
+            fullWidth
+            value={customLow}
+            onChange={(e) => setCustomLow(e.target.value)}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            label="Valor 100"
+            variant="outlined"
+            fullWidth
+            value={customHigh}
+            onChange={(e) => setCustomHigh(e.target.value)}
+            sx={{ mb: 2 }}
+          />
+          <Button
+            fullWidth
+            variant="contained"
+            sx={{
+              backgroundColor: "#f97316",
+              "&:hover": { backgroundColor: "#ea580c" },
+            }}
+            onClick={() => {
+              socket.emit("customTheme", {
+                roomCode: room.code,
+                title: customTitle,
+                low: customLow,
+                high: customHigh,
+              });
+              setShowCustomTheme(false);
+            }}
+          >
+            Confirmar Tema
+          </Button>
+        </Paper>
+      )}
+
+      {/* Tema sorteado ou livre */}
       {theme && (
         <Paper
           elevation={3}
@@ -209,7 +305,7 @@ function Game({ room }) {
       </Paper>
 
       {/* Organização da ordem */}
-      {roundStarted && <OrderBoard room={{ ...room, players }} />}
+      {theme && <OrderBoard room={{ ...room, players }} />}
     </Container>
   );
 }
