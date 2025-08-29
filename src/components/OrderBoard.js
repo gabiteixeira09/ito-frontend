@@ -46,7 +46,6 @@ export default function OrderBoard({ room }) {
   }, []);
 
   useEffect(() => {
-    // Inicializa ordem com os jogadores da sala
     setOrder(Object.keys(room.players));
   }, [room.players]);
 
@@ -66,7 +65,10 @@ export default function OrderBoard({ room }) {
   };
 
   return (
-    <Paper elevation={4} sx={{ p: 2, mt: 3, width: "100%", borderRadius: "12px" }}>
+    <Paper
+      elevation={4}
+      sx={{ p: 2, mt: 3, width: "100%", borderRadius: "12px" }}
+    >
       <Typography variant="h6" gutterBottom>
         Organizar ordem das cartas
       </Typography>
@@ -79,7 +81,8 @@ export default function OrderBoard({ room }) {
         </SortableContext>
       </DndContext>
 
-      {room.isHost && (
+      {/* Confirmar ordem */}
+      {room.isHost && revealed.length === 0 && (
         <Button
           fullWidth
           variant="contained"
@@ -95,16 +98,11 @@ export default function OrderBoard({ room }) {
         </Button>
       )}
 
-      {/* Resultado revelado */}
+      {/* Resultado da ordem revelada */}
       {revealed.length > 0 && (
         <Paper
           elevation={2}
-          sx={{
-            mt: 3,
-            p: 2,
-            backgroundColor: "#fff",
-            borderRadius: "12px",
-          }}
+          sx={{ mt: 3, p: 2, backgroundColor: "#fff", borderRadius: "12px" }}
         >
           <Typography variant="h6" gutterBottom sx={{ color: "#2c3e47" }}>
             Ordem Confirmada
@@ -113,10 +111,32 @@ export default function OrderBoard({ room }) {
             {revealed.map((p, i) => (
               <li key={i} style={{ marginBottom: "6px" }}>
                 <b>{i + 1}º</b> — {p.name}:{" "}
-                <span style={{ color: "red", fontWeight: "bold" }}>{p.card}</span>
+                <span style={{ color: "red", fontWeight: "bold" }}>
+                  {p.card}
+                </span>
               </li>
             ))}
           </ul>
+
+          {/* Botão Nova Partida (só pro host) */}
+          {room.isHost && (
+            <Button
+              fullWidth
+              variant="contained"
+              sx={{
+                mt: 2,
+                backgroundColor: "#16a34a",
+                "&:hover": { backgroundColor: "#15803d" },
+                borderRadius: "12px",
+              }}
+              onClick={() => {
+      console.log("📤 Emitindo evento newGame para sala:", room.code);
+      socket.emit("newGame", room.code);
+    }}
+            >
+              Nova Partida
+            </Button>
+          )}
         </Paper>
       )}
     </Paper>

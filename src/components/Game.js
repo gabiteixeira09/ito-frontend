@@ -47,12 +47,23 @@ function Game({ room }) {
       setClueSent(false);
     });
 
+    // 🔹 Resetar estados quando host inicia nova partida
+    socket.on("newGameStarted", () => {
+        console.log("📥 Evento newGameStarted recebido, resetando estados");
+      setTheme(null);
+      setMyCard(null);
+      setMessages([]);
+      setClue("");
+      setClueSent(false);
+    });
+
     return () => {
       socket.off("updateRoom");
       socket.off("gameStarted");
       socket.off("newClue");
       socket.off("yourCard");
       socket.off("newTheme");
+      socket.off("newGameStarted");
     };
   }, []);
 
@@ -85,19 +96,12 @@ function Game({ room }) {
       }}
     >
       {/* Sala */}
-      <Typography
-        variant="h4"
-        gutterBottom
-        sx={{ fontWeight: "bold", color: "white" }}
-      >
+      <Typography variant="h4" gutterBottom sx={{ fontWeight: "bold", color: "white" }}>
         Sala: {room.code}
       </Typography>
 
       {/* Jogadores */}
-      <Paper
-        elevation={4}
-        sx={{ width: "100%", p: 2, mb: 3, borderRadius: "12px" }}
-      >
+      <Paper elevation={4} sx={{ width: "100%", p: 2, mb: 3, borderRadius: "12px" }}>
         <Typography variant="h6" gutterBottom>
           Jogadores
         </Typography>
@@ -126,12 +130,9 @@ function Game({ room }) {
         </Button>
       )}
 
-      {/* Escolha de tema (apenas host, depois que partida começou, mas antes do tema ser definido) */}
+      {/* Escolha de tema */}
       {room.isHost && gameStarted && !theme && (
-        <Paper
-          elevation={3}
-          sx={{ width: "100%", p: 2, mb: 3, borderRadius: "12px" }}
-        >
+        <Paper elevation={3} sx={{ width: "100%", p: 2, mb: 3, borderRadius: "12px" }}>
           <Typography variant="h6" gutterBottom>
             Escolher Tema
           </Typography>
@@ -162,10 +163,7 @@ function Game({ room }) {
 
       {/* Formulário de tema livre */}
       {room.isHost && showCustomTheme && !theme && (
-        <Paper
-          elevation={3}
-          sx={{ width: "100%", p: 2, mb: 3, borderRadius: "12px" }}
-        >
+        <Paper elevation={3} sx={{ width: "100%", p: 2, mb: 3, borderRadius: "12px" }}>
           <TextField
             label="Título do Tema"
             variant="outlined"
@@ -214,47 +212,19 @@ function Game({ room }) {
 
       {/* Tema sorteado ou livre */}
       {theme && (
-        <Paper
-          elevation={3}
-          sx={{
-            width: "100%",
-            p: 2,
-            mb: 3,
-            borderRadius: "12px",
-            backgroundColor: "#e0f2fe",
-          }}
-        >
-          <Typography
-            variant="h6"
-            sx={{ color: "#0369a1", fontWeight: "bold" }}
-          >
+        <Paper elevation={3} sx={{ width: "100%", p: 2, mb: 3, borderRadius: "12px", backgroundColor: "#e0f2fe" }}>
+          <Typography variant="h6" sx={{ color: "#0369a1", fontWeight: "bold" }}>
             {theme.title}
           </Typography>
-          <Typography>
-            <b>1:</b> {theme.low}
-          </Typography>
-          <Typography>
-            <b>100:</b> {theme.high}
-          </Typography>
+          <Typography><b>1:</b> {theme.low}</Typography>
+          <Typography><b>100:</b> {theme.high}</Typography>
         </Paper>
       )}
 
       {/* Carta e pista */}
       {myCard && (
-        <Paper
-          elevation={3}
-          sx={{
-            width: "100%",
-            p: 2,
-            mb: 3,
-            borderRadius: "12px",
-            backgroundColor: "#fff3cd",
-          }}
-        >
-          <Typography
-            variant="h5"
-            sx={{ color: "red", fontWeight: "bold", mb: 2 }}
-          >
+        <Paper elevation={3} sx={{ width: "100%", p: 2, mb: 3, borderRadius: "12px", backgroundColor: "#fff3cd" }}>
+          <Typography variant="h5" sx={{ color: "red", fontWeight: "bold", mb: 2 }}>
             Sua carta: {myCard}
           </Typography>
 
@@ -286,10 +256,7 @@ function Game({ room }) {
       )}
 
       {/* Pistas recebidas */}
-      <Paper
-        elevation={4}
-        sx={{ width: "100%", p: 2, mb: 3, borderRadius: "12px" }}
-      >
+      <Paper elevation={4} sx={{ width: "100%", p: 2, mb: 3, borderRadius: "12px" }}>
         <Typography variant="h6" gutterBottom>
           Pistas recebidas
         </Typography>
@@ -306,6 +273,14 @@ function Game({ room }) {
 
       {/* Organização da ordem */}
       {theme && <OrderBoard room={{ ...room, players }} />}
+
+      {/* Rodapé */}
+      <Typography
+        variant="body2"
+        sx={{ mt: 4, textAlign: "center", color: "gray", fontStyle: "italic" }}
+      >
+        App designed by Gabriela Teixeira
+      </Typography>
     </Container>
   );
 }

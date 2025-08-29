@@ -79,7 +79,7 @@ function Lobby({ setRoom }) {
           gutterBottom
           sx={{ fontWeight: "bold", color: "#2c3e47" }}
         >
-          Bem-vindo ao ITO 🎴
+          Bem-vindo ao PITITO 
         </Typography>
 
         {errorMessage && (
@@ -132,6 +132,18 @@ function Lobby({ setRoom }) {
         >
           Entrar na Sala
         </Button>
+        {/* Rodapé */}
+        <Typography
+        variant="body2"
+        sx={{
+            mt: 3,
+            textAlign: "center",
+            color: "gray",
+            fontStyle: "italic",
+        }}
+        >
+        App designed by Gabriela Teixeira
+        </Typography>
       </Paper>
     </Container>
   );
